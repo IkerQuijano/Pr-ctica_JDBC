@@ -11,7 +11,7 @@ public class MainEmpresa {
 
 //Atributos
 	
-	private static Connection conexion;
+	private static Connection conexion = null;
 	private static Statement miStatement;
 	private static String usuario = "pardillo";
 	private static String contrasenia = "pardillo";
@@ -23,23 +23,21 @@ public class MainEmpresa {
 	static Scanner leer = new Scanner(System.in);
 	
 	static Map<Integer, String> mapaOficinas = new HashMap<>();		
+	
+	static final int topeEdadMaximo = 65;
+	static final int topeEdadMinimo = 0;
 
 //Métodos	
 		
 		
-	public static void conexion() {
+	public static void conexion() throws SQLException {
 			
-		try {
+		if(conexion == null) {
 			conexion = DriverManager.getConnection(url, usuario, contrasenia);
 			miStatement = conexion.createStatement();
-				
-		} 
-			
-		catch (SQLException e) {
-			e.printStackTrace();
 		}
 		
-
+		System.out.println();
 	}
 	
 	
@@ -51,6 +49,7 @@ public class MainEmpresa {
 		
 		
 		try {
+			conexion();
 			resultado = miStatement.executeQuery(query);
 
 			while(resultado.next()) {
@@ -76,6 +75,7 @@ public class MainEmpresa {
 		
 		
 		try {
+			conexion();
 			resultado = miStatement.executeQuery(query);
 
 			while(resultado.next()) {
@@ -120,6 +120,7 @@ public class MainEmpresa {
 		ciudadDeseada = leer.next();
 		
 		try {
+			conexion();
 			prepareStatement = conexion.prepareStatement(query);
 			prepareStatement.setString(1, ciudadDeseada);
 			resultado = prepareStatement.executeQuery();
@@ -159,7 +160,9 @@ public class MainEmpresa {
 		
 		int edadMinima;
 		int edadMaxima;
-		int cambio;
+		int cambio;		
+		
+		
 		String query = "SELECT * FROM empleado WHERE edad BETWEEN ? AND ?;";
 		ResultSet resultado;
 		PreparedStatement prepareStatement;
@@ -167,33 +170,49 @@ public class MainEmpresa {
 		System.out.println("Mostrar empleados entre un rango de edad.");
 		System.out.println("Edad minima:");
 			edadMinima = leer.nextInt();
+			
+				while(edadMinima < topeEdadMinimo || edadMinima > topeEdadMaximo) {
+					System.out.println("Ese valor esta fuera del rango permitido.");
+					edadMinima = leer.nextInt();
+					
+				}
 		
 		System.out.println("Edad maxima:");
 			edadMaxima = leer.nextInt();
+			
+				while(edadMaxima < topeEdadMinimo || edadMaxima > topeEdadMaximo) {
+					System.out.println("Ese valor esta fuera del rango permitido.");
+					edadMaxima = leer.nextInt();
+					
+				}
 			
 			if(edadMinima > edadMaxima) {
 				cambio = edadMaxima;
 				edadMaxima = edadMinima;
 				edadMinima = cambio;
-				System.out.println("Como la edad mínima era menor que la máxima, se han cambiado.ç");
-				
-				
+				System.out.println("Como la edad mínima era menor que la máxima, se han intercambiado.");	
 			}
 			
 		try {
+			conexion();
 			prepareStatement = conexion.prepareStatement(query);
 			prepareStatement.setInt(1, edadMinima);
 			prepareStatement.setInt(2, edadMaxima);
 			resultado = prepareStatement.executeQuery();
 			
-
-			while(resultado.next()) {
-				System.out.println(resultado.getString("nombre") + " " + resultado.getInt("edad"));
-			}
-			
 			if(!resultado.next()) {
 				System.out.println("No hay empleados para mostrar en ese rango de edad.");
 			}
+			
+			else {
+				System.out.println("Empleados:");
+				
+					while(resultado.next()) {	
+						System.out.println(resultado.getString("nombre") + " " + resultado.getInt("edad"));
+					}
+			}
+			
+				
 			
 		} 
 		
@@ -233,13 +252,19 @@ public class MainEmpresa {
 			
 			System.out.println("Edad:");
 				edad = leer.nextInt();
+				
+					while(edad < topeEdadMinimo || edad > topeEdadMaximo) {
+						System.out.println("Ese valor no es valido:");
+						edad = leer.nextInt();
+					}
 			
 			System.out.println("Puesto:");
 				puesto = leer.next();
 				
 			
 		try {
-				resultado = miStatement.executeQuery(queryNumemp);
+			conexion();
+			resultado = miStatement.executeQuery(queryNumemp);
 				
 				if(resultado.next()) {
 						numemp = resultado.getInt("id");
@@ -305,6 +330,9 @@ public class MainEmpresa {
 						else if(eleccion.equalsIgnoreCase("n")){
 							System.out.println("De acuerdo, saliendo de generar un empleado.");
 						}
+					
+					}
+					
 										
 							if(miStatement.executeUpdate(insertEmpleado) == 1) {
 								System.out.println("Insercion hecha.");
@@ -314,8 +342,6 @@ public class MainEmpresa {
 								System.out.println("Insercion fallida.");
 							}
 							
-				
-					}
 					
 		}
 			
@@ -524,16 +550,12 @@ public class MainEmpresa {
 	*/
 	
 	public static void main(String[] args) {
-
-		conexion();
+		
 	//	uno();
 	//	dos();
-		System.out.println();
 	//	tres();
-		System.out.println();
 		cuatro();
-		System.out.println();
-	//	cinco();
+		cinco();
 		
 	}
 
