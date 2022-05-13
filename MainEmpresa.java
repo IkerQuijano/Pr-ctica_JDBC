@@ -25,9 +25,9 @@ public class MainEmpresa {
 	static Map<Integer, String> mapaOficinas = new HashMap<>();		
 	
 	static final int topeEdadMaximo = 65;
-	static final int topeEdadMinimo = 0;
+	static final int topeEdadMinimo = 16;
 
-//Métodos	
+//MÃ©todos	
 		
 		
 	public static void conexion() throws SQLException {
@@ -190,7 +190,7 @@ public class MainEmpresa {
 				cambio = edadMaxima;
 				edadMaxima = edadMinima;
 				edadMinima = cambio;
-				System.out.println("Como la edad mínima era menor que la máxima, se han intercambiado.");	
+				System.out.println("Como la edad mÃ­nima era menor que la mÃ¡xima, se han intercambiado.");	
 			}
 			
 		try {
@@ -234,14 +234,14 @@ public class MainEmpresa {
 		LocalDate fecha_contrato = java.time.LocalDate.now();
 		
 		ResultSet resultado;
-		ResultSet resultadoFk;
+		ResultSet resultadoFkOficina;
 		String queryNumemp = "SELECT numemp + 1 AS id FROM empleado ORDER BY numemp DESC LIMIT 1;";
 		String queryOficina = "SELECT * FROM oficina;";
 		String insertEmpleado = "";
 		
 		String eleccion;
 		int idOficinaMayor = 0;
-		
+		int contador = 0;
 		
 		
 		//Programa el id es el mayor que haya ya en la BD
@@ -271,24 +271,24 @@ public class MainEmpresa {
 					}
 					
 					else {
-						numemp = 1; //si no hay ningún empleado va a darle el valor 1
+						numemp = 1; //si no hay ningÃºn empleado va a darle el valor 1
 					}
 				
 				
-				resultadoFk = miStatement.executeQuery(queryOficina);
+				resultadoFkOficina = miStatement.executeQuery(queryOficina);
 				
-				/* Comprueba si hay oficinas creadas, si no, va a preguntar si quiere crear una. Si la crea, la asigna automaticamente al empleado */
-				
-					if(resultadoFk.next()) {
-						
-						System.out.println("Estas son las oficinas disponibles, ¿a cual pertenece el empleado?");
-						
-						while(resultadoFk.next()) {
-								System.out.println(resultadoFk.getInt("oficina") + " " + resultadoFk.getString("ciudad"));
-								idOficinaMayor = resultadoFk.getInt("oficina");
+										
+						while(resultadoFkOficina.next()) {
+								System.out.println(resultadoFkOficina.getInt("oficina") + " " + resultadoFkOficina.getString("ciudad"));
+								idOficinaMayor = resultadoFkOficina.getInt("oficina");
+								contador++;								
 							}
 							
-							System.out.println("¿A que oficina pertenece? Escribe un numero y si no es ninguna escribe -1:");
+					/* Comprueba si hay oficinas creadas, si no, va a preguntar si quiere crear una. Si la crea, la asigna automaticamente al empleado */	
+						
+						if(contador > 0) {
+							System.out.println("Estas son las oficinas disponibles, Â¿a cual pertenece el empleado? Escribe un numero y si no es ninguna escribe -1:");
+							System.out.println("Â¿A que oficina pertenece? Escribe un numero y si no es ninguna escribe -1:");
 							fkIdOficina = leer.nextInt();
 							
 								if(fkIdOficina != -1) {
@@ -297,51 +297,18 @@ public class MainEmpresa {
 										fkIdOficina = leer.nextInt();
 									}
 									
-						
-										insertEmpleado = "INSERT INTO empleado VALUES (" + numemp + ", '" + 
-												nombre + "', " + edad + ", " + fkIdOficina + ", '" + puesto + "','" + fecha_contrato + "');";
-								}
-								
-					}
-						
-				/* Si no hay oficinas creadas */				
-								
-					else {
-						System.out.println("Cada empleado debe pertencer a una oficina, pero no hay oficinas creadas."
-								+ "¿Quieres crear una? S/N");
-						
-						eleccion = leer.next();
-						
-							while(!eleccion.equalsIgnoreCase("s") && !eleccion.equalsIgnoreCase("n")) {
-								System.out.println("¿Quieres crear una? S/N");
-								eleccion = leer.next();
-							}
-							
-					/* Si quiere crear una oficina */		
-							
-						if(eleccion.equalsIgnoreCase("s")) {
-														
 							insertEmpleado = "INSERT INTO empleado VALUES (" + numemp + ", '" + 
-									nombre + "', " + edad + ", " + creaOficinas(resultadoFk) + ", '" + puesto + "', '" + fecha_contrato + "');";
-							
-
+									nombre + "', " + edad + ", " + fkIdOficina + ", '" + puesto + "','" + fecha_contrato + "');";
 						}
 						
-						else if(eleccion.equalsIgnoreCase("n")){
-							System.out.println("De acuerdo, saliendo de generar un empleado.");
+					/* Si no hay oficinas creadas */
+								
+						else {
+							System.out.println("No existen oficinas.");
+							decideSiCreaOficina(numemp, edad, nombre, puesto, fecha_contrato, resultadoFkOficina);
 						}
-					
-					}
-					
-										
-							if(miStatement.executeUpdate(insertEmpleado) == 1) {
-								System.out.println("Insercion hecha.");
-							}
-							
-							else {
-								System.out.println("Insercion fallida.");
-							}
-							
+													
+					}			
 					
 		}
 			
@@ -352,11 +319,53 @@ public class MainEmpresa {
 			
 	}
 	
+	
+	public static void decideSiCreaOficina(int numemp, int edad, String nombre, String puesto, LocalDate fecha_contrato, ResultSet resultadoFkOficina) throws SQLException {
+		
+		String eleccion;
+		String insertEmpleado = "";
+		
+		System.out.println("Cada empleado debe pertencer a una oficina. Â¿Quieres crear una? S/N");
+		eleccion = leer.next();
+		
+			while(!eleccion.equalsIgnoreCase("s") && !eleccion.equalsIgnoreCase("n")) {
+				System.out.println("Â¿Quieres crear una? S/N");
+				eleccion = leer.next();
+			}
+			
+	/* Si quiere crear una oficina */		
+			
+		if(eleccion.equalsIgnoreCase("s")) {
+										
+			insertEmpleado = "INSERT INTO empleado VALUES (" + numemp + ", '" + 
+					nombre + "', " + edad + ", " + creaOficinas(resultadoFkOficina) + ", '" + puesto + "', '" + fecha_contrato + "');";
+			
+			if(miStatement.executeUpdate(insertEmpleado) == 1) {
+				System.out.println("Insercion hecha.");
+			}
+			
+			else {
+				System.out.println("Insercion fallida.");
+			}
+
+		}
+		
+		else if(eleccion.equalsIgnoreCase("n")){
+			System.out.println("De acuerdo, saliendo de generar un empleado.");
+		}
+		
+			
+		
+	}
+	
+	
+	
+	
 	/* Devuelve el idOficina */ 
 	
 	public static int creaOficinas(ResultSet resultadoFk) throws SQLException {
 				
-		String querySacaOficinaMayor = "SELECT id_oficina + 1FROM oficina ORDER BY id_oficina DESC LIMIT 1;";
+		String querySacaOficinaMayor = "SELECT max(oficina) + 1 AS id_oficina FROM oficina;";
 		String insertOficina = "";
 		int idOficinaNueva = 0;
 		ResultSet resultado;
@@ -369,16 +378,13 @@ public class MainEmpresa {
 				
 		System.out.println("Ventas:");
 			double ventas = leer.nextDouble();
-				
-		/* Como no hay oficinas, va a tener id 1*/	
-				
-			Oficina oficina = new Oficina(1, ciudad, superficie, ventas);
-			
+
 		
-			if(resultadoFk.next()) {
+			if(!resultadoFk.wasNull()) {
 				resultado = miStatement.executeQuery(querySacaOficinaMayor);
 				
 				idOficinaNueva  = resultado.getInt("id_oficina");
+				System.out.println("nueva oficina" + idOficinaNueva);
 				insertOficina = "INSERT INTO oficina VALUES (" + idOficinaNueva + ", '" + ciudad + "', " + superficie + ", " + ventas + ");";
 			}
 			
@@ -447,7 +453,7 @@ public class MainEmpresa {
 						}
 						
 						else {
-							numemp = 1; //si no hay ningún empleado va a darle el valor 1
+							numemp = 1; //si no hay ningÃºn empleado va a darle el valor 1
 						}
 					
 					
@@ -457,14 +463,14 @@ public class MainEmpresa {
 					
 						if(resultado.next()) {
 							
-							System.out.println("Estas son las oficinas disponibles, ¿a cual pertenece el empleado?");
+							System.out.println("Estas son las oficinas disponibles, Â¿a cual pertenece el empleado?");
 							
 							while(resultadoFk.next()) {
 									System.out.println(resultadoFk.getInt("oficina") + " " + resultadoFk.getString("ciudad"));
 									idOficinaMayor = resultadoFk.getInt("oficina");
 								}
 								
-								System.out.println("¿A que oficina pertenece? Escribe un numero y si no es ninguna escribe -1:");
+								System.out.println("Â¿A que oficina pertenece? Escribe un numero y si no es ninguna escribe -1:");
 								fkIdOficina = leer.nextInt();
 								
 									if(fkIdOficina != -1) {
@@ -482,7 +488,7 @@ public class MainEmpresa {
 									
 						else {
 							System.out.println("Cada empleado debe pertencer a una oficina, pero no hay oficinas creadas."
-									+ "¿Quieres crear una? S/N");
+									+ "Â¿Quieres crear una? S/N");
 							
 							if(leer.next().equalsIgnoreCase("s")) {
 								System.out.println("Ciudad:");
@@ -549,14 +555,132 @@ public class MainEmpresa {
 	
 	*/
 	
+
+	public static void nueve() {
+		
+		ResultSet resultadoFk;
+		PreparedStatement prepareStatement;
+		
+		final int salir = -1;
+		
+		String queryOficina = "SELECT * FROM oficina;";
+		String queryOficinaInicial = "SELECT * FROM oficina WHERE oficina = ?;";
+		String querySacaEmpleados = "SELECT * FROM empleado WHERE oficina = ?;";
+		String queryMueveEmpleados = "UPDATE empleado SET oficina = ? WHERE oficina = ?;";
+
+		int idOficinaInicial;
+		int idOficinaDestino;
+		
+		List<Integer> lista = new ArrayList<>();
+		
+		
+		
+		try {
+			conexion();
+			System.out.println("Se va a realizar el cambio de oficina.");
+			resultadoFk = miStatement.executeQuery(queryOficina);
+			
+		/* Muestra todas las oficinas y guarda el id_oficina mas alto */
+			
+			while(resultadoFk.next()) {
+				lista.add(resultadoFk.getInt("oficina"));
+				System.out.println(resultadoFk.getInt("oficina") + " " + resultadoFk.getString("ciudad"));
+			}
+			
+		 /* Si no hay oficinas ofrece hacer una nueva */
+			
+			if(lista.isEmpty()) {
+				System.out.println("No hay oficinas a las que cambiar.");
+				//decideSiHacerUnaNueva();
+			}
+			
+		/* Si sï¿½ que hay oficinas pregunta y el usuario selecciona una oficina */	
+			
+			else {
+				System.out.println("Â¿En que ciudad esa la oficina de la que se van a trasladar? Escribe el id: (si no es ninguna pon" + salir + ")");
+				idOficinaInicial = leer.nextInt();
+				
+			/* Si en vez de una oficina ha seleccionado salir, sale */
+				
+					if(idOficinaInicial == salir){
+						System.out.println("es null");
+					}
+					
+				/* Si no ha seleccionado salir, mientras que no exista el id_oficina vuelve a pedirla */
+					
+					else {
+						
+						while(!lista.contains(idOficinaInicial)) {
+							System.out.println("Â¿En que ciudad esa la oficina de la que se van a trasladar? Escribe el id: (si no es ninguna pon" + salir + ")");
+							idOficinaInicial = leer.nextInt();
+						}
+						
+						/* Ahora si saca la oficina que quiere el usuario */
+						
+								prepareStatement = conexion.prepareStatement(queryOficinaInicial);
+								prepareStatement.setInt(1, idOficinaInicial);
+								resultadoFk = prepareStatement.executeQuery();
+								
+						/* Ahora toca ver si tiene empleados la oficina */
+								
+								prepareStatement = conexion.prepareStatement(querySacaEmpleados);
+								prepareStatement.setInt(1, idOficinaInicial);
+								resultadoFk = prepareStatement.executeQuery();
+							
+						/* Si efectivamente hay empleados, pide la oficina de destino */		
+								
+								if(resultadoFk.next()) {
+									System.out.println("Â¿A que oficina quieres mandarlos?");
+									idOficinaDestino = leer.nextInt();
+									
+										while(!lista.contains(idOficinaDestino)) {
+											System.out.println("Parece que esa oficina no existe. Â¿A que oficina quieres mandarlos?");
+											idOficinaDestino = leer.nextInt();
+										}
+								
+								/* Ejecuta la query para mover los empleados */
+									
+									prepareStatement = conexion.prepareStatement(queryMueveEmpleados);
+									prepareStatement.setInt(1, idOficinaDestino);
+									prepareStatement.setInt(2, idOficinaInicial);
+									
+									System.out.println("syso " +prepareStatement.executeUpdate());
+									
+									if(prepareStatement.executeUpdate() == 0) {
+										System.out.println("Clientes migrados.");
+									}
+									
+									else{
+										System.out.println("Migracion fallida.");
+									}
+									
+								}
+								
+								else {
+									System.out.println("No hay empleados que cambiar de la oficina " + idOficinaInicial + ".");
+									
+								}
+							}
+					
+					}
+		
+		}
+		
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+				
+		
+	}
+
 	public static void main(String[] args) {
 		
 	//	uno();
 	//	dos();
 	//	tres();
-		cuatro();
+	//	cuatro();
 		cinco();
-		
+		nueve();
 	}
 
 }
